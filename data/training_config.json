@@ -1,0 +1,34 @@
+{
+  "yolo11n": {
+    "imgsz": 1280,
+    "batch": 8,
+    "nbs": 64,
+    "half": true,
+    "cache": false,
+    "workers": 4,
+    "grad_checkpoint": false,
+    "name": "ppe_yolo11n_1280"
+  },
+  "yolo11s": {
+    "imgsz": 1280,
+    "batch": 4,
+    "nbs": 64,
+    "half": true,
+    "cache": false,
+    "workers": 4,
+    "grad_checkpoint": false,
+    "name": "ppe_yolo11s_1280"
+  },
+  "rtdetr": {
+    "imgsz": 1280,
+    "batch": 2,
+    "nbs": 64,
+    "half": true,
+    "cache": false,
+    "workers": 2,
+    "grad_checkpoint": true,
+    "name": "ppe_rtdetr_1280",
+    "fallback_imgsz": 640,
+    "fallback_batch": 8
+  }
+}

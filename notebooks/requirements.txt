@@ -1,0 +1,104 @@
+# ================================================================
+# PPE Compliance Detection — Full Project Requirements
+# ================================================================
+# Python: 3.11.9 (venv)
+# GPU:    RTX 4060/4070 (8 GB VRAM, CUDA 12.x)
+# ================================================================
+#
+# INSTALL ORDER MATTERS — follow these steps:
+#
+#   1. Install PyTorch + CUDA first (from PyTorch index):
+#
+#      pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+#          --index-url https://download.pytorch.org/whl/cu124
+#
+#   2. Then install everything else from this file:
+#
+#      pip install -r requirements.txt
+#
+#   3. Verify CUDA is visible:
+#
+#      python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+#
+# ================================================================
+
+
+# ────────────────────────────────────────────────────────────────
+# CORE ML FRAMEWORK
+# ────────────────────────────────────────────────────────────────
+# torch, torchvision, torchaudio are installed in Step 1 above
+# DO NOT duplicate them here — pip will conflict with the cu124 builds
+
+ultralytics==8.3.50            # YOLO11n, YOLO11s, RT-DETR-l (stable release with YOLO11)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB01 — DATA ACQUISITION & ENGINEERING
+# ────────────────────────────────────────────────────────────────
+kagglehub==0.3.6               # Download CSS dataset from Kaggle
+gdown==5.2.0                   # Download Pictor-PPE dataset from Google Drive
+Pillow==11.1.0                 # Image loading, verification, EXIF stripping
+imagehash==4.3.2               # Perceptual hashing for cross-dataset deduplication
+lxml==5.3.1                    # Fast XML parsing (Pascal VOC annotations)
+pyyaml==6.0.2                  # Generate ppe_dataset.yaml config
+scikit-learn==1.6.1            # train_test_split with stratification
+tqdm==4.67.1                   # Progress bars (notebook + CLI)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB02 — FORENSIC EXPLORATION (EDA)
+# ────────────────────────────────────────────────────────────────
+numpy==1.26.4                  # Array ops (pinned for torch 2.5 compat, avoid numpy 2.x)
+pandas==2.2.3                  # Tabular analysis, CSV parsing (Pictor-PPE)
+matplotlib==3.9.4              # All plots: bar charts, histograms, scatter, grids
+seaborn==0.13.2                # Heatmaps (co-occurrence matrix), styled distributions
+opencv-python==4.10.0.84       # Image I/O, bounding box drawing, video display (GUI)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB03 — PREPROCESSING & AUGMENTATION
+# ────────────────────────────────────────────────────────────────
+albumentations==1.4.22         # RandomFog, RandomRain, GaussNoise, MotionBlur, etc.
+                               # (ultralytics integrates with this via its augmentation pipeline)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB04–NB06 — TRAINING (YOLO11n, YOLO11s, RT-DETR-l)
+# ────────────────────────────────────────────────────────────────
+tensorboard==2.18.0            # Live loss/metric monitoring during training
+# wandb==0.19.1                # OPTIONAL: Weights & Biases tracking (uncomment if using)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB07 — EVALUATION & BENCHMARKING
+# ────────────────────────────────────────────────────────────────
+# All evaluation dependencies are already covered above:
+#   ultralytics (model.val, model.benchmark, confusion matrix)
+#   matplotlib + seaborn (PR curves, comparison charts)
+#   pandas (results tables, CSV export)
+
+
+# ────────────────────────────────────────────────────────────────
+# NB08 — DEPLOYMENT (HF Spaces + ONNX export)
+# ────────────────────────────────────────────────────────────────
+gradio==5.12.0                 # HF Spaces web UI for image upload + compliance report
+onnx==1.17.0                   # ONNX model export format
+onnxruntime==1.20.1            # CPU inference on HF Spaces (1.5–3× faster than PyTorch)
+
+
+# ────────────────────────────────────────────────────────────────
+# JUPYTER NOTEBOOK ENVIRONMENT
+# ────────────────────────────────────────────────────────────────
+jupyter==1.1.1                 # Notebook server
+ipykernel==6.29.5              # Python kernel for Jupyter
+ipywidgets==8.1.5              # tqdm.notebook progress bars, interactive widgets
+nbformat==5.10.4               # Notebook read/write (programmatic access)
+
+
+# ────────────────────────────────────────────────────────────────
+# UTILITIES (pulled in by above but pinned for reproducibility)
+# ────────────────────────────────────────────────────────────────
+scipy==1.14.1                  # Used by ultralytics (NMS), seaborn, scikit-learn
+psutil==6.1.1                  # System monitoring (ultralytics benchmarks, RAM usage)
+py-cpuinfo==9.0.0              # CPU info for benchmark logging
+requests==2.32.3               # HTTP downloads (model weights, datasets)

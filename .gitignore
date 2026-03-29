@@ -1,0 +1,64 @@
+# ================================================================
+# PPE Compliance Detection — .gitignore
+# ================================================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# ---- Virtual Environment ----
+.ppe/
+.venv/
+venv/
+env/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Environment / Secrets ----
+.env
+.env.*
+
+# ---- Data (too large for GitHub) ----
+data/raw/
+data/processed/images/
+data/processed/labels/
+data/quarantine/
+
+# ---- Training Runs (large model checkpoints + logs) ----
+runs/
+notebooks/runs/
+
+# ---- Pretrained Model Weights (downloaded files) ----
+*.pt
+!deployment/best.pt
+
+# ---- ONNX Models (large, will be on HF Spaces) ----
+*.onnx
+!deployment/best.onnx
+
+# ---- Markdown files (excluded until project complete) ----
+*.md
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Logs ----
+*.log
+*.tfevents.*
