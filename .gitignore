@@ -59,6 +59,5 @@ notebooks/runs/
 Thumbs.db
 desktop.ini
 
-# ---- Logs ----
-*.log
-*.tfevents.*
+# ---- HF Space Clone ----
+PPE/

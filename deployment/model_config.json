@@ -1,0 +1,26 @@
+{
+  "class_names": [
+    "hardhat",
+    "no-hardhat",
+    "vest",
+    "no-vest",
+    "person"
+  ],
+  "num_classes": 5,
+  "violation_classes": [
+    "no-hardhat",
+    "no-vest"
+  ],
+  "compliant_classes": [
+    "hardhat",
+    "vest"
+  ],
+  "model": {
+    "architecture": "YOLO11s",
+    "format": "ONNX",
+    "input_size": 640,
+    "training_imgsz": 1280,
+    "test_map50": 0.932,
+    "test_map5095": 0.639
+  }
+}
