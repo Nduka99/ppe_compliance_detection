@@ -1,0 +1,11 @@
+path: C:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\data\processed
+train: images/train
+val: images/val
+test: images/test
+nc: 5
+names:
+- hardhat
+- no-hardhat
+- vest
+- no-vest
+- person
