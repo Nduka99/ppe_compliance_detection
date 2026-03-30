@@ -46,45 +46,21 @@ def detect_ppe(image, conf_threshold=0.25):
 
     summary = ""
     if violations:
-        summary += f"⚠️ VIOLATIONS DETECTED ({len(violations)}):
-"
+        summary += f"⚠️ VIOLATIONS DETECTED ({len(violations)}):\n"
         for v in violations:
-            summary += f"  ❌ {v}
-"
-        summary += "
-"
+            summary += f"  ❌ {v}\n"
+        summary += "\n"
     else:
-        summary += "✅ No PPE violations detected.
-
-"
+        summary += "✅ No PPE violations detected.\n\n"
 
     if compliant:
-        summary += f"PPE Compliant Items ({len(compliant)}):
-"
+        summary += f"PPE Compliant Items ({len(compliant)}):\n"
         for c in compliant:
-            summary += f"  ✅ {c}
-"
-        summary += "
-"
+            summary += f"  ✅ {c}\n"
+        summary += "\n"
 
-    summary += f"Workers detected: {persons}
-"
+    summary += f"Workers detected: {persons}\n"
     summary += f"Total detections: {len(detections)}"
-
-    # Build JSON result for API consumers (Vercel frontend)
-    api_result = {
-        "violations": violations,
-        "compliant": compliant,
-        "persons": persons,
-        "total_detections": len(detections),
-        "boxes": [],
-    }
-    for box in detections:
-        api_result["boxes"].append({
-            "class": CLASS_NAMES[int(box.cls)],
-            "confidence": round(float(box.conf), 4),
-            "bbox": box.xyxy[0].tolist(),
-        })
 
     return annotated_rgb, summary
 
@@ -120,6 +96,7 @@ demo = gr.Interface(
     ),
     examples=examples if examples else None,
     cache_examples=False,
+    api_name="detect",
 )
 
-demo.launch()
+demo.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
