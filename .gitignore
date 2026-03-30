@@ -32,6 +32,7 @@ env/
 # ---- Environment / Secrets ----
 .env
 .env.*
+!.env.example
 
 # ---- Data (too large for GitHub) ----
 data/raw/
@@ -58,6 +59,11 @@ notebooks/runs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# ---- Frontend ----
+frontend/node_modules/
+frontend/dist/
+frontend/.vercel/
 
 # ---- HF Space Clone ----
 PPE/

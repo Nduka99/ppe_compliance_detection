@@ -17,9 +17,17 @@ jobs:
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             --max-time 30 \
             "https://nduka1999-ppe.hf.space/")
-          echo "Response code: $HTTP_CODE"
+          echo "HF Space response: $HTTP_CODE"
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 500 ]; then
             echo "Space is alive"
           else
             echo "Space may be rebuilding or down (HTTP $HTTP_CODE)"
           fi
+
+      - name: Ping Vercel Frontend
+        run: |
+          echo "Pinging Vercel frontend..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 15 \
+            "https://ppe-detection-blush.vercel.app/")
+          echo "Vercel response: $HTTP_CODE"
