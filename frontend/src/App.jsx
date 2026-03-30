@@ -19,7 +19,6 @@ function App() {
   const [backendStatus, setBackendStatus] = useState("connecting");
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [confidence, setConfidence] = useState(0.25);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -41,14 +40,14 @@ function App() {
     setError(null);
     setResult(null);
     try {
-      const data = await detectPPE(image, confidence);
+      const data = await detectPPE(image);
       setResult({ annotatedImage: data[0], summary: data[1] });
     } catch (err) {
       setError(err.message || "Detection failed. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [image, confidence]);
+  }, [image]);
 
   const handleClear = () => {
     setImage(null);
@@ -102,38 +101,6 @@ function App() {
               }}
               onClear={handleClear}
             />
-
-            {/* Confidence slider */}
-            <div
-              className="rounded-xl p-4 border"
-              style={{
-                backgroundColor: "var(--bg-card)",
-                borderColor: "var(--border)",
-              }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium">Confidence Threshold</label>
-                <span
-                  className="text-sm font-mono px-2 py-0.5 rounded"
-                  style={{ backgroundColor: "var(--bg-secondary)" }}
-                >
-                  {confidence.toFixed(2)}
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0.1"
-                max="0.9"
-                step="0.05"
-                value={confidence}
-                onChange={(e) => setConfidence(parseFloat(e.target.value))}
-                className="w-full accent-orange-600"
-              />
-              <div className="flex justify-between text-xs" style={{ color: "var(--text-secondary)" }}>
-                <span>0.1 (more detections)</span>
-                <span>0.9 (fewer, higher confidence)</span>
-              </div>
-            </div>
 
             {/* Submit button */}
             <button
