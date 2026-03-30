@@ -193,6 +193,25 @@ function App() {
         <p className="mb-8 max-w-2xl" style={{ color: "var(--text-secondary)" }}>
           Upload a construction site image or short video (max 10s) to detect hard hats and safety vests.
           The model identifies PPE violations and highlights them with bounding boxes.
+          {" "}
+          <button
+            onClick={async () => {
+              const res = await fetch("/example.jpg");
+              const blob = await res.blob();
+              const file = new File([blob], "example.jpg", { type: "image/jpeg" });
+              const url = URL.createObjectURL(file);
+              setImage(file);
+              setPreview({ url, isVideo: false });
+              setIsVideo(false);
+              setResult(null);
+              setError(null);
+              setVideoFrameResults([]);
+            }}
+            className="underline font-medium"
+            style={{ color: "var(--accent)" }}
+          >
+            Try an example image
+          </button>
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
