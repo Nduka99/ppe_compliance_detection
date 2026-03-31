@@ -54,6 +54,8 @@ notebooks/runs/
 
 # ---- Markdown files (excluded until project complete) ----
 *.md
+!README.md
+!**/README.md
 
 # ---- OS files ----
 .DS_Store
