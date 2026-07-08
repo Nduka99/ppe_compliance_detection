@@ -39,6 +39,7 @@ data/raw/
 data/processed/images/
 data/processed/labels/
 data/quarantine/
+data/vest_boost/
 
 # ---- Training Runs (large model checkpoints + logs) ----
 runs/
