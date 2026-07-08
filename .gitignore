@@ -69,3 +69,6 @@ frontend/.vercel/
 
 # ---- HF Space Clone ----
 PPE/
+
+# ---- Vlog production files (large media + Remotion node_modules) ----
+VLOG/
