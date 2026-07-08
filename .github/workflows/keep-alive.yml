@@ -1,5 +1,10 @@
 name: Keep HF Space Alive
 
+# NOTE: GitHub disables scheduled workflows after 60 days without repo activity
+# (this happened on 2026-05-30 and the Space went to sleep). Scheduled runs do
+# NOT count as activity — only commits do. If the badge shows this workflow as
+# disabled, re-enable it from the Actions tab or push any commit that touches
+# this file.
 on:
   schedule:
     # Ping every 14 minutes — HF free-tier sleeps after ~48h of inactivity,
