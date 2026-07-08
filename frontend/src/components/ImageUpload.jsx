@@ -1,18 +1,19 @@
 import { useCallback, useRef, useState } from "react";
 
+const MAX_VIDEO_SECONDS = 10;
+
 export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onClear }) {
   const fileRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
-  const [videoError, setVideoError] = useState(null);
+  const [fileError, setFileError] = useState(null);
 
   const handleFile = useCallback(
     (file) => {
       if (!file) return;
-      setVideoError(null);
+      setFileError(null);
 
       if (file.type.startsWith("image/")) {
-        const url = URL.createObjectURL(file);
-        onImageSelect(file, url);
+        onImageSelect(file, URL.createObjectURL(file));
         return;
       }
 
@@ -23,20 +24,29 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
         video.preload = "metadata";
         video.onloadedmetadata = () => {
           URL.revokeObjectURL(video.src);
-          if (video.duration > 10) {
-            setVideoError(`Video is ${Math.round(video.duration)}s — max 10 seconds allowed.`);
+          if (!Number.isFinite(video.duration)) {
+            setFileError("Could not determine the video's length. Try re-exporting it as MP4.");
             URL.revokeObjectURL(url);
             return;
           }
-          onVideoSelect(file, url, video.duration);
+          if (video.duration > MAX_VIDEO_SECONDS) {
+            setFileError(
+              `Video is ${Math.round(video.duration)}s — the maximum is ${MAX_VIDEO_SECONDS} seconds.`
+            );
+            URL.revokeObjectURL(url);
+            return;
+          }
+          onVideoSelect(file, url);
         };
         video.onerror = () => {
-          setVideoError("Could not read video file.");
+          setFileError("Could not read the video file.");
           URL.revokeObjectURL(url);
         };
         video.src = url;
         return;
       }
+
+      setFileError("Unsupported file type — upload a JPG or PNG image, or an MP4/WebM video.");
     },
     [onImageSelect, onVideoSelect]
   );
@@ -45,21 +55,16 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
     (e) => {
       e.preventDefault();
       setDragOver(false);
-      const file = e.dataTransfer.files[0];
-      handleFile(file);
+      handleFile(e.dataTransfer.files[0]);
     },
     [handleFile]
   );
 
   return (
     <div
-      className={`rounded-xl border-2 border-dashed transition-all overflow-hidden ${
-        dragOver ? "border-orange-500 scale-[1.01]" : ""
+      className={`overflow-hidden rounded-xl border-2 border-dashed bg-card transition-all ${
+        dragOver ? "scale-[1.01] border-accent" : "border-line"
       }`}
-      style={{
-        borderColor: dragOver ? "var(--accent)" : "var(--border)",
-        backgroundColor: "var(--bg-card)",
-      }}
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
@@ -70,22 +75,16 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
       {preview ? (
         <div className="relative">
           {preview.isVideo ? (
-            <video
-              src={preview.url}
-              className="w-full max-h-80 object-contain"
-              controls
-              muted
-            />
+            <video src={preview.url} className="max-h-80 w-full object-contain" controls muted />
           ) : (
-            <img
-              src={preview.url || preview}
-              alt="Uploaded"
-              className="w-full max-h-80 object-contain"
-            />
+            <img src={preview.url} alt="Uploaded" className="max-h-80 w-full object-contain" />
           )}
           <button
-            onClick={() => { setVideoError(null); onClear(); }}
-            className="absolute top-2 right-2 p-1.5 rounded-full text-white bg-black/60 hover:bg-black/80 transition"
+            onClick={() => {
+              setFileError(null);
+              onClear();
+            }}
+            className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white transition hover:bg-black/80"
             aria-label="Remove file"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -96,7 +95,7 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
       ) : (
         <button
           onClick={() => fileRef.current?.click()}
-          className="w-full p-12 flex flex-col items-center gap-3 cursor-pointer"
+          className="flex w-full cursor-pointer flex-col items-center gap-3 p-12"
         >
           <svg
             width="48"
@@ -105,24 +104,25 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
-            style={{ color: "var(--text-secondary)" }}
+            className="text-ink-muted"
+            aria-hidden="true"
           >
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <p className="font-medium" style={{ color: "var(--text-secondary)" }}>
+          <p className="font-medium text-ink-muted">
             Drop an image or video here, or click to upload
           </p>
-          <p className="text-xs" style={{ color: "var(--text-secondary)", opacity: 0.7 }}>
-            JPG, PNG, MP4, WebM — videos max 10 seconds
+          <p className="text-xs text-ink-muted opacity-70">
+            JPG, PNG, MP4, WebM — videos up to {MAX_VIDEO_SECONDS} seconds
           </p>
         </button>
       )}
 
-      {videoError && (
-        <div className="px-4 py-2 text-sm" style={{ color: "var(--danger)" }}>
-          {videoError}
+      {fileError && (
+        <div className="px-4 py-2 text-sm text-danger" role="alert">
+          {fileError}
         </div>
       )}
 

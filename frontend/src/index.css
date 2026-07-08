@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
@@ -28,10 +30,27 @@
   --warning: #fbbf24;
 }
 
+/* Expose the theme variables as Tailwind color tokens (bg-surface, text-ink,
+   border-line, ...) so components use utility classes instead of inline styles. */
+@theme inline {
+  --color-surface: var(--bg-primary);
+  --color-surface-alt: var(--bg-secondary);
+  --color-card: var(--bg-card);
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-secondary);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
 body {
   margin: 0;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s, color 0.3s;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
