@@ -18,12 +18,12 @@ React web application for uploading construction site images and videos to detec
 
 - **Image upload** — Drag-and-drop or file picker for JPG/PNG images
 - **Video upload** — Upload video clips (max 10 seconds). Frames are extracted client-side at 2 FPS and sent individually to the backend, with a progress indicator showing results building in real time
-- **Confidence threshold slider** — Adjustable from 0.1 (more detections) to 0.9 (fewer, higher confidence), default 0.25
+- **Detection sensitivity slider** — Adjustable from 0.1 (more detections) to 0.9 (higher confidence), default 0.25
 - **Detection results** — Annotated image with bounding boxes and class labels drawn by the backend model
-- **Compliance summary** — Text breakdown of violations and compliant PPE items detected
+- **Compliance summary** — Structured breakdown of violations and compliant PPE items with friendly labels ("Missing hard hat") and per-detection confidence
 - **Video frame navigator** — Browse individual frame results with previous/next buttons and an aggregated summary across all frames
 - **Dark mode** — Toggle between light and dark themes, persisted in localStorage and respects system preference
-- **Backend health indicator** — Status badge showing backend connectivity (Ready / Connecting / Error)
+- **Backend auto-wake** — The status badge (Connecting / Waking backend / Online / Offline) polls the Hugging Face runtime API; a sleeping Space is woken automatically and a Retry action appears if the backend is unreachable
 - **Example image** — "Try an example image" link for quick demo without uploading
 
 ## Architecture
@@ -42,26 +42,27 @@ User uploads image/video
          ▼
   ┌─────────────┐
   │   api.js     │  @gradio/client → HF Spaces /detect endpoint
-  └──────┬──────┘
+  └──────┬──────┘  (wakes a sleeping Space via the HF runtime API first)
          │
          ▼
   ┌─────────────────┐
   │ DetectionResult  │  Displays annotated image from backend
-  │ ComplianceSummary│  Renders violation/compliant text
+  │ ComplianceSummary│  Renders the structured JSON report
   └─────────────────┘
 ```
 
 ## Components
 
-| Component | Lines | Purpose |
-|-----------|-------|---------|
-| `App.jsx` | 468 | Main application logic, state management, video frame extraction, layout |
-| `api.js` | 30 | Gradio client connection, `detectPPE()` and `checkHealth()` functions |
-| `ImageUpload.jsx` | 138 | File drag-and-drop, image/video type detection, video duration validation |
-| `DetectionResult.jsx` | 44 | Annotated image display with loading state |
-| `ComplianceSummary.jsx` | 35 | Text summary with colour-coded violation/compliant styling |
-| `StatusBadge.jsx` | 16 | Backend connectivity indicator |
-| `ThemeToggle.jsx` | 21 | Dark/light mode toggle |
+| Component | Purpose |
+|-----------|---------|
+| `App.jsx` | Main application logic, state management, video frame extraction, layout |
+| `api.js` | Gradio client connection, backend wake/health lifecycle, `detectPPE()`, error mapping |
+| `labels.js` | Maps raw class names to user-facing labels ("no-hardhat" → "Missing hard hat") |
+| `ImageUpload.jsx` | File drag-and-drop, image/video type detection, video duration validation |
+| `DetectionResult.jsx` | Annotated image display with loading state |
+| `ComplianceSummary.jsx` | Structured violation/compliant lists with confidence, text fallback |
+| `StatusBadge.jsx` | Backend connectivity indicator with retry action |
+| `ThemeToggle.jsx` | Dark/light mode toggle |
 
 ## Video Processing Flow
 

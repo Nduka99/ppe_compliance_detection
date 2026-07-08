@@ -162,12 +162,15 @@ YOLO11s was selected for deployment based on its superior performance across all
 
 ### Backend (Hugging Face Spaces)
 
-- **Framework**: Gradio
+- **Framework**: Gradio (Spaces Gradio SDK; a Dockerfile is included for local container runs)
 - **Model format**: ONNX (38 MB, CPU-optimised via onnxruntime)
-- **Container**: Docker (Python 3.11-slim)
-- **Inference**: 640px input size, configurable confidence threshold (0.1-0.9)
-- **Output**: Annotated image with bounding boxes + text compliance summary
-- **Keep-alive**: GitHub Actions workflow pings the Space every 14 minutes to prevent cold sleep
+- **Inference**: 640px input size, configurable confidence threshold (0.1-0.9). Input images
+  are passed as PIL objects — raw numpy arrays are interpreted as BGR by Ultralytics, which
+  silently channel-swaps colours and degrades vest detection.
+- **Output**: Annotated image + text compliance summary + structured JSON report
+- **Keep-alive**: GitHub Actions workflow pings the Space every 14 minutes to prevent cold
+  sleep. Note: GitHub disables scheduled workflows after 60 days without repo commits — if
+  the Space stops responding, re-enable the workflow from the Actions tab.
 
 See [deployment/README.md](deployment/README.md) for backend-specific details.
 
@@ -201,9 +204,8 @@ PPE_Compliance_detection/
 │   └── training_config.json             # Model-specific training configs
 ├── deployment/
 │   ├── app.py                           # Gradio web interface
-│   ├── best.onnx                        # YOLO11s ONNX model (38 MB)
-│   ├── best.pt                          # YOLO11s PyTorch weights (19 MB)
-│   ├── Dockerfile                       # HF Spaces container
+│   ├── ppe_yolo11s.onnx                 # YOLO11s ONNX model (38 MB)
+│   ├── Dockerfile                       # Container for local runs
 │   ├── requirements.txt                 # Backend dependencies
 │   ├── model_config.json                # Class names, violation mapping
 │   ├── training_args.yaml               # Full training hyperparameters
@@ -211,18 +213,19 @@ PPE_Compliance_detection/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx                      # Main application logic
-│   │   ├── api.js                       # Gradio client wrapper
+│   │   ├── api.js                       # Gradio client + backend wake/health
 │   │   └── components/                  # React components
 │   ├── package.json
 │   └── vite.config.js
 ├── results/                             # Training logs, metrics CSVs, plots
+│   └── weights/ppe_yolo11s.pt           # YOLO11s PyTorch training weights
 ├── .github/workflows/keep-alive.yml     # Prevent HF Space cold sleep
 └── requirements.txt                     # Full Python environment
 ```
 
 ## Known Limitations
 
-1. **Vest detection on novel images** — While the model achieves 92% AP50 on vest classes within the test set distribution, vest detection on arbitrary real-world images is inconsistent. This is likely due to limited visual diversity in vest appearances across the three training datasets. Hardhats generalise much better due to their distinctive shape.
+1. **Vest detection on novel images** — While the model achieves 92% AP50 on vest classes within the test set distribution, vest detection on arbitrary real-world images can be inconsistent. This is partly due to limited visual diversity in vest appearances across the three training datasets. (An inference-path bug that channel-swapped RGB/BGR — turning orange vests blue before the model saw them — was found and fixed in July 2026, which measurably improved vest recall.) Hardhats generalise better due to their distinctive shape.
 
 2. **Class imbalance** — `no-hardhat` represents 78% of all annotations. While augmentation and oversampling mitigate this during training, the model's real-world vest detection is still weaker than hardhat detection.
 
