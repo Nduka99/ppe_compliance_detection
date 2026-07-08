@@ -23,10 +23,10 @@ Client (image + conf_threshold)
 Gradio Interface (port 7860)
     │
     ▼
-YOLO11s ONNX Model (best.onnx, 38 MB)
+YOLO11s ONNX Model (ppe_yolo11s.onnx, 38 MB)
     │
     ▼
-Annotated Image + Compliance Summary
+Annotated Image + Compliance Summary + Structured JSON Report
 ```
 
 ## Model
@@ -59,12 +59,16 @@ Annotated Image + Compliance Summary
 The Gradio interface exposes a single `/detect` endpoint:
 
 **Inputs:**
-- `image` (numpy array) — Construction site image
+- `image` (PIL image) — Construction site image. PIL input (not a raw numpy
+  array) matters: Ultralytics interprets raw ndarrays as BGR, which would
+  silently channel-swap the image and degrade color-sensitive detections
+  such as hi-vis vests.
 - `conf_threshold` (float, 0.1-0.9, default 0.25) — Minimum detection confidence
 
 **Outputs:**
 - Annotated image with bounding boxes and class labels
 - Text compliance summary listing violations and compliant items
+- Structured JSON report: `{ violations: [{label, confidence}], compliant: [{label, confidence}], workers, total_detections }`
 
 ## Training Data
 
@@ -81,11 +85,9 @@ Merged from three public datasets (~10,864 images, 144,986 bounding boxes):
 ```
 deployment/
 ├── app.py               # Gradio interface and inference logic
-├── best.onnx            # YOLO11s ONNX model (38 MB)
-├── best.pt              # YOLO11s PyTorch weights (19 MB)
-├── Dockerfile           # Python 3.11-slim container for HF Spaces
+├── ppe_yolo11s.onnx     # YOLO11s ONNX model (38 MB, static 640px input)
+├── Dockerfile           # Python 3.11-slim container (local use; the Space runs the Gradio SDK)
 ├── requirements.txt     # Runtime dependencies
-├── runtime.txt          # Python version specification
 ├── model_config.json    # Class names, violation mapping, model metadata
 ├── training_args.yaml   # Full training hyperparameters from NB05
 ├── hyp_ppe.yaml         # Augmentation hyperparameters
@@ -94,6 +96,9 @@ deployment/
     ├── example2.jpg
     └── example3.jpg
 ```
+
+The PyTorch training weights live at `results/weights/ppe_yolo11s.pt` in the
+project repo — they are not needed at inference time.
 
 ## Dependencies
 

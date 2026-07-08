@@ -1,82 +1,98 @@
-import gradio as gr
-from ultralytics import YOLO
-from PIL import Image
-import numpy as np
+"""PPE compliance detection API — Gradio app served on Hugging Face Spaces."""
+
 import json
 import os
 
-# ---- Load model ----
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "best.onnx")
-model = YOLO(MODEL_PATH)
+import gradio as gr
+from PIL import Image
+from ultralytics import YOLO
 
-CLASS_NAMES = ["hardhat", "no-hardhat", "vest", "no-vest", "person"]
-VIOLATION_CLASSES = {"no-hardhat", "no-vest"}
-COMPLIANT_CLASSES = {"hardhat", "vest"}
+BASE_DIR = os.path.dirname(__file__)
+
+with open(os.path.join(BASE_DIR, "model_config.json"), encoding="utf-8") as f:
+    _config = json.load(f)
+
+CLASS_NAMES = _config["class_names"]
+VIOLATION_CLASSES = set(_config["violation_classes"])
+COMPLIANT_CLASSES = set(_config["compliant_classes"])
+
+model = YOLO(os.path.join(BASE_DIR, _config["model"]["file"]), task="detect")
+
+EMPTY_REPORT = {"violations": [], "compliant": [], "workers": 0, "total_detections": 0}
 
 
 def detect_ppe(image, conf_threshold=0.25):
-    """Run PPE detection on an uploaded image."""
+    """Detect PPE in an image and report compliance.
+
+    Returns the annotated image, a human-readable summary, and a structured
+    report for programmatic consumers (the web frontend).
+    """
     if image is None:
-        return None, "No image provided."
+        return None, "No image provided.", dict(EMPTY_REPORT)
 
-    # Run inference
-    results = model(image, imgsz=640, conf=conf_threshold, verbose=False)
-    result = results[0]
+    # PIL input lets Ultralytics handle the RGB->BGR conversion itself; feeding
+    # a raw RGB ndarray would be misread as BGR and skew color-sensitive
+    # classes (hi-vis vests especially).
+    result = model.predict(image, imgsz=640, conf=conf_threshold, verbose=False)[0]
 
-    # Draw annotated image
-    annotated = result.plot()
-    annotated_rgb = Image.fromarray(annotated[..., ::-1])
+    # result.plot() returns a BGR array (OpenCV convention) — flip to RGB.
+    annotated = Image.fromarray(result.plot()[..., ::-1])
 
-    # Build compliance summary
-    detections = result.boxes
-    violations = []
-    compliant = []
-    persons = 0
+    violations, compliant = [], []
+    workers = 0
+    for box in result.boxes:
+        label = CLASS_NAMES[int(box.cls)]
+        confidence = round(float(box.conf), 3)
+        if label in VIOLATION_CLASSES:
+            violations.append({"label": label, "confidence": confidence})
+        elif label in COMPLIANT_CLASSES:
+            compliant.append({"label": label, "confidence": confidence})
+        elif label == "person":
+            workers += 1
 
-    for box in detections:
-        cls_name = CLASS_NAMES[int(box.cls)]
-        conf = float(box.conf)
+    report = {
+        "violations": violations,
+        "compliant": compliant,
+        "workers": workers,
+        "total_detections": len(result.boxes),
+    }
+    return annotated, build_summary(report), report
 
-        if cls_name in VIOLATION_CLASSES:
-            violations.append(f"{cls_name} ({conf:.0%})")
-        elif cls_name in COMPLIANT_CLASSES:
-            compliant.append(f"{cls_name} ({conf:.0%})")
-        elif cls_name == "person":
-            persons += 1
 
-    summary = ""
-    if violations:
-        summary += f"⚠️ VIOLATIONS DETECTED ({len(violations)}):\n"
-        for v in violations:
-            summary += f"  ❌ {v}\n"
-        summary += "\n"
+def build_summary(report):
+    """Render the structured report as text for the Gradio demo page."""
+    lines = []
+    if report["violations"]:
+        lines.append(f"⚠️ VIOLATIONS DETECTED ({len(report['violations'])}):")
+        lines += [f"  ❌ {v['label']} ({v['confidence']:.0%})" for v in report["violations"]]
+        lines.append("")
     else:
-        summary += "✅ No PPE violations detected.\n\n"
+        lines.append("✅ No PPE violations detected.")
+        lines.append("")
 
-    if compliant:
-        summary += f"PPE Compliant Items ({len(compliant)}):\n"
-        for c in compliant:
-            summary += f"  ✅ {c}\n"
-        summary += "\n"
+    if report["compliant"]:
+        lines.append(f"PPE compliant items ({len(report['compliant'])}):")
+        lines += [f"  ✅ {c['label']} ({c['confidence']:.0%})" for c in report["compliant"]]
+        lines.append("")
 
-    summary += f"Workers detected: {persons}\n"
-    summary += f"Total detections: {len(detections)}"
-
-    return annotated_rgb, summary
+    lines.append(f"Workers detected: {report['workers']}")
+    lines.append(f"Total detections: {report['total_detections']}")
+    return "\n".join(lines)
 
 
-# ---- Build Gradio interface ----
-example_dir = os.path.join(os.path.dirname(__file__), "examples")
+example_dir = os.path.join(BASE_DIR, "examples")
 examples = []
 if os.path.isdir(example_dir):
-    for f in sorted(os.listdir(example_dir)):
-        if f.lower().endswith((".jpg", ".jpeg", ".png")):
-            examples.append([os.path.join(example_dir, f)])
+    examples = [
+        [os.path.join(example_dir, f)]
+        for f in sorted(os.listdir(example_dir))
+        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+    ]
 
 demo = gr.Interface(
     fn=detect_ppe,
     inputs=[
-        gr.Image(type="numpy", label="Upload Construction Site Image"),
+        gr.Image(type="pil", label="Construction Site Image"),
         gr.Slider(
             minimum=0.1, maximum=0.9, value=0.25, step=0.05,
             label="Confidence Threshold",
@@ -85,6 +101,7 @@ demo = gr.Interface(
     outputs=[
         gr.Image(label="Detection Result"),
         gr.Textbox(label="Compliance Summary", lines=10),
+        gr.JSON(label="Structured Report"),
     ],
     title="🦺 PPE Compliance Detector",
     description=(
@@ -99,4 +116,4 @@ demo = gr.Interface(
     api_name="detect",
 )
 
-demo.launch(server_name="0.0.0.0", server_port=7860, ssr_mode=False)
+demo.launch(ssr_mode=False)

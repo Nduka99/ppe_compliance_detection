@@ -46,11 +46,11 @@ notebooks/runs/
 
 # ---- Pretrained Model Weights (downloaded files) ----
 *.pt
-!deployment/best.pt
+!results/weights/ppe_yolo11s.pt
 
 # ---- ONNX Models (large, will be on HF Spaces) ----
 *.onnx
-!deployment/best.onnx
+!deployment/ppe_yolo11s.onnx
 
 # ---- Markdown files (excluded until project complete) ----
 *.md

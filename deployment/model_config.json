@@ -17,6 +17,7 @@
   ],
   "model": {
     "architecture": "YOLO11s",
+    "file": "ppe_yolo11s.onnx",
     "format": "ONNX",
     "input_size": 640,
     "training_imgsz": 1280,
