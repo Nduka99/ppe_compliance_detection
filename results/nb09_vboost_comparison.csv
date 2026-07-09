@@ -1,0 +1,8 @@
+class,baseline_ap50,vboost_ap50,delta
+hardhat,0.94,0.914,-0.026
+no-hardhat,0.966,0.964,-0.002
+vest,0.92,0.907,-0.013
+no-vest,0.921,0.885,-0.036
+person,0.915,0.925,0.01
+OVERALL mAP50,0.932,0.919,-0.013
+OVERALL mAP50-95,0.639,0.639,0.0
