@@ -1,15 +1,49 @@
 import { useCallback, useRef, useState } from "react";
 import { MAX_VIDEO_SECONDS } from "../config";
 
+function formatSize(bytes) {
+  if (!bytes) return null;
+  return bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.round(bytes / 1e3)} KB`;
+}
+
+/** Shown when the browser cannot render the clip — analysis still works. */
+function ClipPlaceholder({ preview }) {
+  const details = [preview.name, formatSize(preview.size),
+                   preview.duration ? `${preview.duration.toFixed(1)}s` : null]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <div className="flex min-h-48 flex-col items-center justify-center gap-2 p-10 text-center">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           strokeWidth="1.5" className="text-ink-muted" aria-hidden="true">
+        <rect x="2" y="5" width="14" height="14" rx="2" />
+        <path d="M16 10l6-3v10l-6-3z" />
+      </svg>
+      <p className="font-medium">Clip ready to analyze</p>
+      {details && <p className="text-xs text-ink-muted">{details}</p>}
+      <p className="max-w-xs text-xs text-ink-muted">
+        Your browser can't play this format, so there's no preview — but it will still be
+        analyzed, and the annotated result will play here.
+      </p>
+    </div>
+  );
+}
+
 export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onClear }) {
   const fileRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState(null);
+  // Some containers/codecs (HEVC, .mov, .avi) parse well enough to report a
+  // duration but the browser still refuses to render them. The server can
+  // decode far more than the browser can play, so a failed preview must not
+  // block analysis — we fall back to a file summary instead.
+  const [previewUnplayable, setPreviewUnplayable] = useState(false);
 
   const handleFile = useCallback(
     (file) => {
       if (!file) return;
       setFileError(null);
+      setPreviewUnplayable(false);
 
       if (file.type.startsWith("image/")) {
         onImageSelect(file, URL.createObjectURL(file));
@@ -18,34 +52,37 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
 
       if (file.type.startsWith("video/")) {
         const url = URL.createObjectURL(file);
-        // Validate duration via a temporary video element
-        const video = document.createElement("video");
-        video.preload = "metadata";
-        video.onloadedmetadata = () => {
-          URL.revokeObjectURL(video.src);
-          if (!Number.isFinite(video.duration)) {
+        // Read duration via a temporary element before accepting the file
+        const probe = document.createElement("video");
+        probe.preload = "metadata";
+        probe.onloadedmetadata = () => {
+          const duration = probe.duration;
+          URL.revokeObjectURL(probe.src);
+          if (!Number.isFinite(duration)) {
             setFileError("Could not determine the video's length. Try re-exporting it as MP4.");
             URL.revokeObjectURL(url);
             return;
           }
-          if (video.duration > MAX_VIDEO_SECONDS) {
+          if (duration > MAX_VIDEO_SECONDS) {
             setFileError(
-              `Video is ${Math.round(video.duration)}s — the maximum is ${MAX_VIDEO_SECONDS} seconds.`
+              `Video is ${Math.round(duration)}s — the maximum is ${MAX_VIDEO_SECONDS} seconds.`
             );
             URL.revokeObjectURL(url);
             return;
           }
-          onVideoSelect(file, url);
+          onVideoSelect(file, url, duration);
         };
-        video.onerror = () => {
-          setFileError("Could not read the video file.");
-          URL.revokeObjectURL(url);
+        probe.onerror = () => {
+          // Metadata unreadable in-browser. Accept anyway: the server decodes
+          // formats the browser cannot, and rejecting here would block valid files.
+          onVideoSelect(file, url, null);
+          setPreviewUnplayable(true);
         };
-        video.src = url;
+        probe.src = url;
         return;
       }
 
-      setFileError("Unsupported file type — upload a JPG or PNG image, or an MP4/WebM video.");
+      setFileError("Unsupported file type — upload a JPG or PNG image, or a video file.");
     },
     [onImageSelect, onVideoSelect]
   );
@@ -74,13 +111,24 @@ export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onC
       {preview ? (
         <div className="relative">
           {preview.isVideo ? (
-            <video src={preview.url} className="max-h-80 w-full object-contain" controls muted />
+            previewUnplayable ? (
+              <ClipPlaceholder preview={preview} />
+            ) : (
+              <video
+                src={preview.url}
+                className="max-h-80 w-full object-contain"
+                controls
+                muted
+                onError={() => setPreviewUnplayable(true)}
+              />
+            )
           ) : (
             <img src={preview.url} alt="Uploaded" className="max-h-80 w-full object-contain" />
           )}
           <button
             onClick={() => {
               setFileError(null);
+              setPreviewUnplayable(false);
               onClear();
             }}
             className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white transition hover:bg-black/80"

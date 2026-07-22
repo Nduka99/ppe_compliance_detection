@@ -41,10 +41,16 @@ function App() {
     initBackend();
   }, [initBackend]);
 
-  const handleFileSelect = (selected, previewUrl, video) => {
+  const handleFileSelect = (selected, previewUrl, video, duration = null) => {
     if (preview?.url?.startsWith("blob:")) URL.revokeObjectURL(preview.url);
     setFile(selected);
-    setPreview({ url: previewUrl, isVideo: video });
+    setPreview({
+      url: previewUrl,
+      isVideo: video,
+      name: selected?.name,
+      size: selected?.size,
+      duration,
+    });
     setIsVideo(video);
     setResult(null);
     setError(null);
@@ -120,7 +126,7 @@ function App() {
             <ImageUpload
               preview={preview}
               onImageSelect={(f, url) => handleFileSelect(f, url, false)}
-              onVideoSelect={(f, url) => handleFileSelect(f, url, true)}
+              onVideoSelect={(f, url, duration) => handleFileSelect(f, url, true, duration)}
               onClear={handleClear}
             />
 
