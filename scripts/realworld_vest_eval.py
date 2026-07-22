@@ -67,23 +67,29 @@ def find_run(pattern, exclude=None):
 
 
 def main():
-    # collect vest-containing images
+    # Held-out SH17 test split (84 images) — shares NO images with round-3 training.
+    # Restricting to this split keeps baseline/r1/r2/r3 comparable on identical data.
+    test_file = ROOT / "data/sh17_vest_test.txt"
+    only_stems = set(test_file.read_text().split()) if test_file.exists() else None
+
     images = []
     for l in glob.glob(str(SH / "labels" / "*.txt")):
+        stem = Path(l).stem
+        if only_stems is not None and stem not in only_stems:
+            continue
         ids = [ln.split()[0] for ln in open(l).read().splitlines() if ln.strip()]
         if str(SH_VEST) in ids:
-            stem = Path(l).stem
             for ext in (".jpg", ".jpeg"):
                 p = SH / "images" / f"{stem}{ext}"
                 if p.exists():
                     images.append((p, Path(l)))
                     break
-    print(f"real-world vest test set: {len(images)} images")
+    print(f"real-world vest test set (held-out SH17): {len(images)} images")
 
     models = {
         "baseline": YOLO(ROOT / "results/weights/ppe_yolo11s.pt"),
-        "round 1": YOLO(find_run("ppe_yolo11s_vboost*", exclude="_r2")),
         "round 2": YOLO(find_run("ppe_yolo11s_vboost_r2*")),
+        "round 3": YOLO(find_run("ppe_yolo11s_vboost_r3*")),
     }
 
     total_gt = 0
@@ -158,12 +164,12 @@ def main():
 
     # ---- chart: recall vs confidence ----
     fig, ax = plt.subplots(figsize=(9, 5))
-    colors = {"baseline": GREY, "round 1": YELLOW, "round 2": BLUE}
+    colors = {"baseline": GREY, "round 2": YELLOW, "round 3": BLUE}
     for name in models:
         ax.plot(THRESHOLDS, [r * 100 for r in recalls[name]], marker="o", ms=5, lw=2,
-                color=colors[name], label=name)
+                color=colors.get(name, GREY), label=name)
         ax.text(THRESHOLDS[-1] + 0.005, recalls[name][-1] * 100, name, va="center",
-                fontsize=9.5, color=colors[name])
+                fontsize=9.5, color=colors.get(name, GREY))
     ax.axvline(0.25, color=AXIS, lw=1, ls=(0, (4, 4)))
     ax.text(0.25, ax.get_ylim()[1], " app default", fontsize=8.5, color=MUTED, va="top")
     ax.set_xlabel("confidence threshold", fontsize=10)
@@ -174,16 +180,20 @@ def main():
         ax.spines[s].set_visible(False)
     ax.set_xlim(0.08, 0.56)
     ax.legend(frameon=False, fontsize=9.5, loc="upper right")
-    ax.set_title("Real-world vest detection — SH17 (213 images, 530 vests, independent)",
+    ax.set_title(f"Real-world vest detection — held-out SH17 ({len(images)} images, {total_gt} vests)",
                  fontsize=12, color=INK, loc="left", pad=12)
     fig.tight_layout()
-    fig.savefig(RESULTS / "nb09_realworld_vest_recall.png", dpi=150)
+    fig.savefig(RESULTS / "nb09_r3_realworld_vest_recall.png", dpi=150)
     plt.close(fig)
-    print("\nchart saved: results/nb09_realworld_vest_recall.png")
+    print("\nchart saved: results/nb09_r3_realworld_vest_recall.png")
 
     # verdict
-    b, r2 = recalls["baseline"][i25], recalls["round 2"][i25]
-    print(f"\nVERDICT: round 2 finds {(r2-b)*100:+.1f} percentage points more real-world vests than baseline at conf 0.25")
+    b = recalls["baseline"][i25]
+    r3 = recalls["round 3"][i25]
+    r2 = recalls["round 2"][i25]
+    print(f"\nVERDICT @ conf 0.25 (held-out real-world vests):")
+    print(f"  baseline {b*100:.1f}%  ->  round 2 {r2*100:.1f}%  ->  round 3 {r3*100:.1f}%")
+    print(f"  round 3 vs baseline: {(r3-b)*100:+.1f} pp | round 3 vs round 2: {(r3-r2)*100:+.1f} pp")
 
 
 if __name__ == "__main__":

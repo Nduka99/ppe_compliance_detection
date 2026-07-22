@@ -39,7 +39,12 @@ data/raw/
 data/processed/images/
 data/processed/labels/
 data/quarantine/
+# Vest-campaign training pools (regenerable via scripts/prep_round3_data.py,
+# scripts/sh17_split_prep.py). Too large for GitHub; the held-out test image
+# list (data/sh17_vest_test.txt) IS tracked so the benchmark is reproducible.
 data/vest_boost/
+data/vest_boost2/
+data/vest_boost_sh17/
 
 # ---- Training Runs (large model checkpoints + logs) ----
 runs/

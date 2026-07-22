@@ -1,0 +1,7 @@
+class,baseline,round2,round3,round3_vs_baseline
+hardhat,0.94,0.94,0.934,-0.006
+no-hardhat,0.966,0.965,0.965,-0.001
+vest,0.92,0.908,0.878,-0.042
+no-vest,0.921,0.877,0.872,-0.049
+person,0.915,0.923,0.915,0.0
+OVERALL mAP50,0.932,0.923,0.913,-0.019

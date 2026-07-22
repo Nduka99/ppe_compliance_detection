@@ -1,0 +1,24 @@
+# v3 (round 3): original train + three vest-boost sources, with the small
+# high-variety vest sets oversampled (listed multiple times) so each epoch sees
+# proportionally more diverse vests. val/test unchanged for comparable metrics.
+# Real-world vest generalization is measured on the held-out SH17 test split
+# (data/sh17_vest_test.txt), which shares NO images with training.
+path: C:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\data
+train:
+  - processed/images/train        # 15,479 base (mostly hardhat/no-hardhat/person)
+  - vest_boost/images             # 3,452 vest-rich (Roboflow safety-vests)
+  - vest_boost/images             #   x2 oversample
+  - vest_boost_sh17/images        # 128 varied real-world vests (SH17 train split)
+  - vest_boost_sh17/images        #   x4 oversample (small but highest-variety)
+  - vest_boost_sh17/images
+  - vest_boost_sh17/images
+  - vest_boost2/images            # 871 hardhat-variety (johnsyin)
+val: processed/images/val
+test: processed/images/test
+nc: 5
+names:
+  - hardhat
+  - no-hardhat
+  - vest
+  - no-vest
+  - person

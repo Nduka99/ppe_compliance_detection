@@ -148,6 +148,44 @@ The dataset exhibits significant class imbalance, with `no-hardhat` dominating a
 
 YOLO11s was selected for deployment based on its superior performance across all classes, particularly the 7-8% improvement on minority vest classes, while maintaining real-time inference speed at 77 FPS.
 
+### Real-World Vest Detection (NB09)
+
+The in-distribution scores above turned out to be misleading for one class. Despite 92% AP50 on
+`vest`, the deployed model detected almost no vests on arbitrary real photographs. Investigating
+this became a separate piece of work — see
+[NB09_Vest_Boost_Finetune.ipynb](notebooks/NB09_Vest_Boost_Finetune.ipynb).
+
+**The measurement problem.** The original test split shares its sources, capture conditions and
+vest styles with training, so it measures "can the model recognise *this* style of vest" rather
+than "can it recognise vests". An independent benchmark was built from
+[SH17](https://github.com/ahmadmughees/SH17dataset) (Pexels industrial photography): 84 held-out
+images with 214 human-labelled vests, sharing no image with any training set.
+
+**Result** — vest recall at the app's default confidence (0.25):
+
+| Model | Real-world vest recall | Vest precision | hardhat AP50 | Deployed |
+|-------|------------------------|----------------|--------------|----------|
+| Baseline (NB05) | **0.0%** (0/214) | — | 0.940 | previously |
+| Round 1 — naive merge | *withheld* | — | 0.914 ⚠ | no |
+| Round 2 — pseudo-labelled | 24.8% (53/214) | 88.3% | 0.940 | no |
+| **Round 3 — + variety** | **50.5%** (108/214) | 80.0% | 0.934 | **yes** |
+
+**Key lesson.** Round 1 merged a vest-only dataset and *reduced* hard-hat accuracy by 2.6 points.
+The vest dataset annotates only vest classes, so every unlabelled hard hat and worker in its
+images trained as **background**. Merging a partially-labelled dataset into a multi-class detector
+silently teaches the model to suppress the classes that dataset omits. The fix was to pseudo-label
+the omitted classes with the current model before merging, which restored hard-hat accuracy while
+keeping the vest gains.
+
+![Real-world vest recall](results/nb09_fig1_realworld_recall_curve.png)
+
+The two metrics disagree by design — the in-distribution score declines while real-world recall
+rises from zero to over half — because they reward different things. Deployment decisions follow
+the goal metric, with the in-distribution scores retained as a regression guard on the non-vest
+classes.
+
+![Metric divergence](results/nb09_fig6_metric_divergence.png)
+
 ### Evaluation Artifacts
 
 - Confusion matrices (side-by-side)
@@ -196,10 +234,16 @@ PPE_Compliance_detection/
 │   ├── NB05_Training_YOLO11s.ipynb      # YOLO11s primary model (all-in-one)
 │   ├── NB06_Training_RTDETR.ipynb       # RT-DETR (deferred)
 │   ├── NB07_Evaluation.ipynb            # Model comparison & benchmarking
-│   └── NB08_Deployment.ipynb            # ONNX export & HF Spaces setup
+│   ├── NB08_Deployment.ipynb            # ONNX export & HF Spaces setup
+│   └── NB09_Vest_Boost_Finetune.ipynb   # Vest campaign: diagnosis, data strategy, deploy decision
 ├── data/
 │   ├── processed/                       # Final dataset (images + labels)
-│   ├── ppe_dataset.yaml                 # YOLO dataset config
+│   ├── vest_boost/                      # Roboflow safety-vests, pseudo-labelled (gitignored)
+│   ├── vest_boost2/                     # Hardhat+vest set, pseudo-labelled (gitignored)
+│   ├── vest_boost_sh17/                 # SH17 train split, mapped + pseudo-labelled (gitignored)
+│   ├── sh17_vest_test.txt               # 84 held-out benchmark image stems
+│   ├── ppe_dataset.yaml                 # Original YOLO dataset config
+│   ├── ppe_dataset_v3.yaml              # Round-3 config (vest sources, oversampled)
 │   ├── hyp_ppe.yaml                     # Augmentation hyperparameters
 │   └── training_config.json             # Model-specific training configs
 ├── deployment/
@@ -217,17 +261,45 @@ PPE_Compliance_detection/
 │   │   └── components/                  # React components
 │   ├── package.json
 │   └── vite.config.js
+├── scripts/
+│   ├── sh17_classmap.py                 # Verify SH17 class indices (paper order is wrong)
+│   ├── realworld_vest_eval.py           # Held-out real-world vest benchmark
+│   └── resume_round3_training.py        # Resume a paused fine-tune from last.pt
 ├── results/                             # Training logs, metrics CSVs, plots
-│   └── weights/ppe_yolo11s.pt           # YOLO11s PyTorch training weights
+│   ├── nb09_fig*.png                    # Vest-campaign figures (NB09)
+│   └── weights/
+│       ├── ppe_yolo11s.pt               # NB05 baseline weights
+│       └── ppe_yolo11s_vboost_r3.pt     # Deployed round-3 weights
 ├── .github/workflows/keep-alive.yml     # Prevent HF Space cold sleep
 └── requirements.txt                     # Full Python environment
 ```
 
 ## Known Limitations
 
-1. **Vest detection on novel images** — While the model achieves 92% AP50 on vest classes within the test set distribution, vest detection on arbitrary real-world images can be inconsistent. This is partly due to limited visual diversity in vest appearances across the three training datasets. (An inference-path bug that channel-swapped RGB/BGR — turning orange vests blue before the model saw them — was found and fixed in July 2026, which measurably improved vest recall.) Hardhats generalise better due to their distinctive shape.
+1. **Vest recall is 50.5%, not 95%** — the deployed model still misses about half of real-world
+   vests. This went from unusable (0%) to useful, not to solved. Two earlier causes were found and
+   fixed along the way: an inference-path bug that channel-swapped RGB/BGR (turning orange vests
+   blue before the model saw them), and a partial-label merge that suppressed classes. See
+   [NB09](notebooks/NB09_Vest_Boost_Finetune.ipynb).
 
-2. **Class imbalance** — `no-hardhat` represents 78% of all annotations. While augmentation and oversampling mitigate this during training, the model's real-world vest detection is still weaker than hardhat detection.
+2. **The held-out benchmark shares a source with part of training** — round 3 trained on 128 SH17
+   images and is evaluated on 84 *different* SH17 images. A perceptual-hash leakage guard enforces
+   zero image overlap, but the test distribution is closer to training for round 3 than for round 2
+   (whose 24.8% was fully cross-domain). Round 3's advantage is real but partly reflects
+   distribution adaptation.
+
+3. **`no-vest` is not measured in the real world** — no independent dataset labels "person without
+   a vest", so the violation class is only measured in-distribution, where it fell ~5 points. This
+   is the weakest-evidenced part of the result.
+
+4. **Precision/recall trade** — round 3 buys 25.7 points of recall for 8 points of vest precision
+   (80% at the default threshold). Appropriate for compliance screening, where a missed violation
+   costs more than a false alarm, but it is a deliberate trade rather than a free win.
+
+5. **Class imbalance** — `no-hardhat` represents 78% of all annotations. Augmentation and
+   oversampling mitigate this during training, but vest classes remain the scarcest signal: the
+   original 15,480-image training pool contributes **zero** vest boxes, so all vest signal is
+   imported from added datasets.
 
 3. **CPU inference latency** — The HF Spaces free tier runs on CPU. Single-image inference takes 2-4 seconds. Video processing (20 frames) takes proportionally longer.
 
