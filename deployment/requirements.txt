@@ -4,3 +4,7 @@ onnxruntime>=1.20.1
 opencv-python-headless>=4.10.0
 Pillow>=11.1.0
 numpy<2.0
+# H.264 encoding for the annotated video output — OpenCV's bundled mp4v codec
+# produces files browsers will not play.
+imageio[ffmpeg]>=2.34.0
+imageio-ffmpeg>=0.5.1

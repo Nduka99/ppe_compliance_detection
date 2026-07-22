@@ -16,7 +16,12 @@ export function connectToBackend() {
   return clientPromise;
 }
 
+// VITE_SPACE_ID may be a full URL when pointing at a local or self-hosted
+// instance; there is no Hugging Face runtime to query in that case.
+const IS_DIRECT_URL = /^https?:\/\//i.test(SPACE_ID);
+
 async function getSpaceStage() {
+  if (IS_DIRECT_URL) return "UNKNOWN";
   const res = await fetch(SPACE_API_URL);
   if (!res.ok) throw new Error(`Space lookup failed (HTTP ${res.status})`);
   const info = await res.json();
@@ -70,6 +75,60 @@ export async function detectPPE(imageBlob, confThreshold = 0.25) {
     annotatedUrl:
       annotated?.url ?? (typeof annotated === "string" ? annotated : null),
     report: normalizeReport(report, summary),
+  };
+}
+
+/**
+ * Send a whole clip to the backend, which returns an annotated MP4 with the
+ * detections burned in plus an aggregate compliance report. The browser no
+ * longer slices frames itself.
+ */
+export async function detectPPEVideo(videoBlob, confThreshold = 0.25) {
+  const client = await connectToBackend();
+  const result = await client.predict("/detect_video", {
+    video_path: videoBlob,
+    conf_threshold: confThreshold,
+  });
+  const [annotated, summary, report] = result.data;
+  // gr.Video hands back either a FileData object or a {video: FileData} wrapper
+  // depending on Gradio version — accept both.
+  const url =
+    annotated?.video?.url ??
+    annotated?.url ??
+    (typeof annotated === "string" ? annotated : null);
+  return { annotatedUrl: url, report: normalizeVideoReport(report, summary) };
+}
+
+function toCountList(counts) {
+  return Object.entries(counts ?? {})
+    .map(([label, frames]) => ({ label, frames }))
+    .sort((a, b) => b.frames - a.frames);
+}
+
+function normalizeVideoReport(report, summary) {
+  if (report && typeof report.frames_analyzed === "number") {
+    const violations = toCountList(report.violation_counts);
+    return {
+      framesAnalyzed: report.frames_analyzed,
+      framesWithViolations: report.frames_with_violations ?? 0,
+      violations,
+      compliant: toCountList(report.compliant_counts),
+      peakWorkers: report.peak_workers ?? 0,
+      durationSeconds: report.duration_seconds ?? null,
+      hasViolations: (report.frames_with_violations ?? 0) > 0,
+      rawSummary: null,
+    };
+  }
+  const text = typeof summary === "string" ? summary : "";
+  return {
+    framesAnalyzed: 0,
+    framesWithViolations: 0,
+    violations: [],
+    compliant: [],
+    peakWorkers: 0,
+    durationSeconds: null,
+    hasViolations: /VIOLATION/i.test(text),
+    rawSummary: text || null,
   };
 }
 

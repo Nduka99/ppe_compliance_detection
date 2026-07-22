@@ -1,8 +1,8 @@
 const CONFIG = {
   connecting: { label: "Connecting", dotClass: "bg-warning animate-pulse", textClass: "text-warning" },
-  waking: { label: "Waking backend", dotClass: "bg-warning animate-pulse", textClass: "text-warning" },
-  ready: { label: "Online", dotClass: "bg-success", textClass: "text-success" },
-  offline: { label: "Offline", dotClass: "bg-danger", textClass: "text-danger" },
+  waking: { label: "Starting up", dotClass: "bg-warning animate-pulse", textClass: "text-warning" },
+  ready: { label: "Ready", dotClass: "bg-success", textClass: "text-success" },
+  offline: { label: "Unavailable", dotClass: "bg-danger", textClass: "text-danger" },
 };
 
 export default function StatusBadge({ status, onRetry }) {

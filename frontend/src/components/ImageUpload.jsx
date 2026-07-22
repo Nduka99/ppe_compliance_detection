@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-
-const MAX_VIDEO_SECONDS = 10;
+import { MAX_VIDEO_SECONDS } from "../config";
 
 export default function ImageUpload({ preview, onImageSelect, onVideoSelect, onClear }) {
   const fileRef = useRef(null);
