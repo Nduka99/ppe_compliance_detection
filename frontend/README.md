@@ -17,7 +17,11 @@ React web application for uploading construction site images and videos to detec
 ## Features
 
 - **Image upload** — Drag-and-drop or file picker for JPG/PNG images
-- **Video upload** — Upload video clips (max 10 seconds). Frames are extracted client-side at 2 FPS and sent individually to the backend, with a progress indicator showing results building in real time
+- **Video upload** — Upload clips of up to 15 seconds. The whole file is sent to the backend, which
+  returns a single **annotated MP4** with detections drawn on every frame, plus an aggregate
+  compliance report. The result is playable inline and downloadable. (Earlier versions sliced frames
+  in the browser and showed a frame-by-frame navigator; that was replaced because a video output is
+  what the task actually calls for.)
 - **Detection sensitivity slider** — Adjustable from 0.1 (more detections) to 0.9 (higher confidence), default 0.25
 - **Detection results** — Annotated image with bounding boxes and class labels drawn by the backend model
 - **Compliance summary** — Structured breakdown of violations and compliant PPE items with friendly labels ("Missing hard hat") and per-detection confidence

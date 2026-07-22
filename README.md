@@ -205,7 +205,11 @@ classes.
 - **Inference**: 640px input size, configurable confidence threshold (0.1-0.9). Input images
   are passed as PIL objects — raw numpy arrays are interpreted as BGR by Ultralytics, which
   silently channel-swaps colours and degrades vest detection.
-- **Output**: Annotated image + text compliance summary + structured JSON report
+- **Endpoints**: `/detect` (image) and `/detect_video` (clips up to 15 s)
+- **Output**: Annotated image or **annotated MP4** + text compliance summary + structured JSON report
+- **Video handling**: detection runs on sampled frames (2 fps) while boxes are drawn onto *every*
+  frame, so the returned clip plays back smoothly instead of updating twice a second. Encoded as
+  H.264 via `imageio-ffmpeg` — OpenCV's default `mp4v` output will not play in browsers.
 - **Keep-alive**: GitHub Actions workflow pings the Space every 14 minutes to prevent cold
   sleep. Note: GitHub disables scheduled workflows after 60 days without repo commits — if
   the Space stops responding, re-enable the workflow from the Actions tab.
@@ -303,7 +307,8 @@ PPE_Compliance_detection/
 
 3. **CPU inference latency** — The HF Spaces free tier runs on CPU. Single-image inference takes 2-4 seconds. Video processing (20 frames) takes proportionally longer.
 
-4. **10-second video limit** — Video upload is capped at 10 seconds to keep API call count manageable on the free tier.
+4. **15-second video limit** — clips are capped at 15 seconds because the whole video is processed
+   server-side on a free CPU tier. A 12-second clip takes roughly 25-30 seconds end to end.
 
 ## Future Work
 
