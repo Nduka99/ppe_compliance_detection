@@ -1,5 +1,4 @@
 # v2: original dataset + vest_boost (Safety Vests, CC BY 4.0, train-only)
-path: c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\data
 train:
   - processed/images/train
   - vest_boost/images

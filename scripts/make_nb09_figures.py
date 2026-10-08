@@ -12,7 +12,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
 
-RESULTS = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\results")
+RESULTS = Path(__file__).resolve().parent.parent / "results"
 
 # ---- theme (validated reference palette, light surface) ----
 SURFACE = "#fcfcfb"

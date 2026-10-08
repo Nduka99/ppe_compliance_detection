@@ -11,7 +11,8 @@ os.environ["YOLO_AUTOINSTALL"] = "false"
 import torch
 from ultralytics import YOLO
 
-LAST = r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\notebooks\runs\detect\ppe_yolo11s_vboost_r3\weights\last.pt"
+LAST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "notebooks", "runs", "detect", "ppe_yolo11s_vboost_r3", "weights", "last.pt")
 
 
 def main():

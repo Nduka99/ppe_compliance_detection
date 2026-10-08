@@ -3,7 +3,6 @@
 # proportionally more diverse vests. val/test unchanged for comparable metrics.
 # Real-world vest generalization is measured on the held-out SH17 test split
 # (data/sh17_vest_test.txt), which shares NO images with training.
-path: C:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\data
 train:
   - processed/images/train        # 15,479 base (mostly hardhat/no-hardhat/person)
   - vest_boost/images             # 3,452 vest-rich (Roboflow safety-vests)

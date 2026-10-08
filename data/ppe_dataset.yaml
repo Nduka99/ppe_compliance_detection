@@ -1,7 +1,6 @@
-path: C:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection\data\processed
-train: images/train
-val: images/val
-test: images/test
+train: processed/images/train
+val: processed/images/val
+test: processed/images/test
 nc: 5
 names:
 - hardhat
