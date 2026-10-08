@@ -305,9 +305,9 @@ PPE_Compliance_detection/
    original 15,480-image training pool contributes **zero** vest boxes, so all vest signal is
    imported from added datasets.
 
-3. **CPU inference latency** — The HF Spaces free tier runs on CPU. Single-image inference takes 2-4 seconds. Video processing (20 frames) takes proportionally longer.
+6. **CPU inference latency** — The HF Spaces free tier runs on CPU. Single-image inference takes 2-4 seconds. Video processing (20 frames) takes proportionally longer.
 
-4. **15-second video limit** — clips are capped at 15 seconds because the whole video is processed
+7. **15-second video limit** — clips are capped at 15 seconds because the whole video is processed
    server-side on a free CPU tier. A 12-second clip takes roughly 25-30 seconds end to end.
 
 ## Future Work
