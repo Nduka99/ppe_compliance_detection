@@ -20,7 +20,7 @@ from PIL import Image
 import imagehash
 from ultralytics import YOLO
 
-ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
+ROOT = Path(__file__).resolve().parent.parent
 SRC = Path.home() / ".cache/kagglehub/datasets/johnsyin97/hardhat-and-safety-vest-image-for-object-detection/versions/1/train"
 SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 SH_VEST = 16

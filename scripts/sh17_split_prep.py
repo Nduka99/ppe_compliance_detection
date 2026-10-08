@@ -20,7 +20,7 @@ from pathlib import Path
 from PIL import Image
 from ultralytics import YOLO
 
-ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
+ROOT = Path(__file__).resolve().parent.parent
 SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 SH_VEST, SH_HELMET, SH_PERSON = 16, 10, 0
 MAP = {SH_VEST: 2, SH_HELMET: 0, SH_PERSON: 4}

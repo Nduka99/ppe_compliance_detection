@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from ultralytics import YOLO
 
-ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
+ROOT = Path(__file__).resolve().parent.parent
 SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 RESULTS = ROOT / "results"
 SH_VEST = 16          # verified SH17 index for safety-vest
