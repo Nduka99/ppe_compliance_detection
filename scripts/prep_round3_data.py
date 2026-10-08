@@ -21,8 +21,8 @@ import imagehash
 from ultralytics import YOLO
 
 ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
-SRC = Path(r"C:/Users/nwagb/.cache/kagglehub/datasets/johnsyin97/hardhat-and-safety-vest-image-for-object-detection/versions/1/train")
-SH = Path(r"C:/Users/nwagb/.cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1")
+SRC = Path.home() / ".cache/kagglehub/datasets/johnsyin97/hardhat-and-safety-vest-image-for-object-detection/versions/1/train"
+SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 SH_VEST = 16
 DST_IMG = ROOT / "data/vest_boost2/images"
 DST_LBL = ROOT / "data/vest_boost2/labels"

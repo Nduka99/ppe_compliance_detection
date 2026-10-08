@@ -8,7 +8,7 @@ from PIL import Image
 import imagehash
 
 ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
-SH = Path(r"C:/Users/nwagb/.cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1")
+SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 THRESH = 6
 
 test_stems = set((ROOT / "data/sh17_vest_test.txt").read_text().split())

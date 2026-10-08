@@ -4,7 +4,7 @@ import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
-SH = r"C:/Users/nwagb/.cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
+SH = os.path.expanduser("~/.cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1")
 
 
 def iou(a, b):

@@ -19,7 +19,7 @@ from PIL import Image
 from ultralytics import YOLO
 
 ROOT = Path(r"c:\Users\nwagb\Desktop\SponsorshipGlobalTalentPrep\PPE_Compliance_detection")
-SH = Path(r"C:/Users/nwagb/.cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1")
+SH = Path.home() / ".cache/kagglehub/datasets/mugheesahmad/sh17-dataset-for-ppe-detection/versions/1"
 RESULTS = ROOT / "results"
 SH_VEST = 16          # verified SH17 index for safety-vest
 MY_VEST = 2           # our model class 2 = "vest present" — the correct positive for a worn hi-vis vest
